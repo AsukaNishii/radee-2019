@@ -91,6 +91,7 @@ class MCP3002:
 class Radee(MCP3002):
     """
     Main Class
+    MCP3002を継承
 
     Attributes
     ----------
