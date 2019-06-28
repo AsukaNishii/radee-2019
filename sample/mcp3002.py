@@ -26,21 +26,21 @@ class MCP3002:
 
     Attributes
     ----------
-    ch_spi : int
+    spi_ch : int
         RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
     spi : object
         spidevで提供されているオブジェクト
     """
-    def __init__(self, ch_spi):
+    def __init__(self, spi_ch):
         """
         Constructor
 
         Parameters
         ----------
-        ch_spi : int
+        spi_ch : int
             RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
         """
-        self.ch_spi       = ch_spi
+        self.spi_ch       = spi_ch
         self.spi          = spidev.SpiDev()
 
     def spi_setup(self):
@@ -81,7 +81,7 @@ class MCP3002:
         adcout : int
             ADコンバータの出力値, すなわち測定電圧値[V]
         """
-        command1 = 0xd | (ch_spi<<1)
+        command1 = 0xd | (spi_ch<<1)
         command1 <<= 3
         ret = self.spi.xfer2([command1,0,0])
         adcout = (ret[0]&0x3)<<8 | ret[1]
@@ -106,7 +106,7 @@ class Radee(MCP3002):
         半導体センサーのリセット信号を出力するGPIOピンのBCM番号
     hold_bcm : int, default 27
         ホールド信号を出力するGPIOピンのBCM番号
-    ch_spi : int
+    spi_ch : int
         RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
     timing_const : float
         信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
@@ -124,7 +124,7 @@ class Radee(MCP3002):
     MCP3002 : MCP3002関連のクラス   
     """
     def __init__(self, receiver_bcm=18, resetter_bcm=17, hold_bcm=27, \
-                 timing_const=0.00002, ch_spi=0):
+                 timing_const=0.00002, spi_ch=0):
         """
         Constructor
 
@@ -136,7 +136,7 @@ class Radee(MCP3002):
             半導体センサーのリセット信号を出力するGPIOピンのBCM番号
         hold_bcm : int, default 27
             ホールド信号を出力するGPIOピンのBCM番号
-        ch_spi : int
+        spi_ch : int
             RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
         timing_const : float
             信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
@@ -145,7 +145,7 @@ class Radee(MCP3002):
         --------
         MCP3002.__init__ : super().__init__で呼び出される
         """
-        super().__init__(ch_spi)
+        super().__init__(spi_ch)
         self.receiver_bcm = receiver_bcm
         self.resetter_bcm = resetter_bcm
         self.hold_bcm     = hold_bcm
