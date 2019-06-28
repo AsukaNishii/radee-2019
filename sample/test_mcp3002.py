@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-radee2019/mcp3002.py
+radee2019/test_mcp3002.py
 
 @2019, Kazuki IWANAGA
 
