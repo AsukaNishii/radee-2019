@@ -12,7 +12,7 @@ radee2019/sample/demo_test_mcp3002.py
 - 使用するピン(BCM)
     GPIO18 : 入力(receiver) 信号が来たことを知らせる割り込み信号を受信する
     GPIO17 : 出力(resetter) 読み出し終了後にセンサーのリセット信号を出力する
-    GPIO27 : 出力(hold)     電圧を読み出しの間ホールドする信号を出力する
+    GPIO27 : 出力(holder)     電圧を読み出しの間ホールドする信号を出力する
 """
 
 # import RPi.GPIO as GPIO
@@ -108,7 +108,7 @@ class Radee(MCP3002):
         割り込み信号を受信するGPIOピンのBCM番号
     resetter_bcm : int, default 17
         半導体センサーのリセット信号を出力するGPIOピンのBCM番号
-    hold_bcm : int, default 27
+    holder_bcm : int, default 27
         ホールド信号を出力するGPIOピンのBCM番号
     spi_ch : int
         RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
@@ -127,7 +127,7 @@ class Radee(MCP3002):
     --------
     MCP3002 : MCP3002関連のクラス   
     """
-    def __init__(self, receiver_bcm=18, resetter_bcm=17, hold_bcm=27, \
+    def __init__(self, receiver_bcm=18, resetter_bcm=17, holder_bcm=27, \
                  timing_const=0.00002, spi_ch=0):
         """
         Constructor
@@ -138,7 +138,7 @@ class Radee(MCP3002):
             割り込み信号を受信するGPIOピンのBCM番号
         resetter_bcm : int, default 18
             半導体センサーのリセット信号を出力するGPIOピンのBCM番号
-        hold_bcm : int, default 27
+        holder_bcm : int, default 27
             ホールド信号を出力するGPIOピンのBCM番号
         spi_ch : int
             RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
@@ -152,7 +152,7 @@ class Radee(MCP3002):
         super().__init__(spi_ch)
         self.receiver_bcm = receiver_bcm
         self.resetter_bcm = resetter_bcm
-        self.hold_bcm     = hold_bcm
+        self.holder_bcm   = holder_bcm
         self.timing_const = timing_const
         self.data         = {"time": time.time(), "voltage": 0}
 
@@ -168,8 +168,8 @@ class Radee(MCP3002):
         # GPIO.setup(self.resetter_bcm, GPIO.OUT)
         # GPIO.output(self.resetter_bcm, GPIO.LOW)
 
-        # GPIO.setup(self.hold_bcm, GPIO.OUT)
-        # GPIO.output(self.hold_bcm, GPIO.LOW)
+        # GPIO.setup(self.holder_bcm, GPIO.OUT)
+        # GPIO.output(self.holder_bcm, GPIO.LOW)
 
     def measure(self):
         """
@@ -192,10 +192,10 @@ class Radee(MCP3002):
         # GPIO.wait_for_edge(self.receiver_bcm, GPIO.RISING)
         # time.sleep(self.timing_const)
 
-        # GPIO.output(self.hold_bcm, GPIO.HIGH)
+        # GPIO.output(self.holder_bcm, GPIO.HIGH)
         self.data["time"] = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
         self.data["voltage"] = self.spi_read()
-        # GPIO.output(self.hold_bcm, GPIO.LOW)
+        # GPIO.output(self.holder_bcm, GPIO.LOW)
 
         # time.sleep(0.0003) # 本当に必要か分からないので要検証
         # GPIO.output(self.resetter_bcm, GPIO.HIGH)
