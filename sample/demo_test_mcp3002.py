@@ -20,6 +20,7 @@ radee2019/sample/demo_test_mcp3002.py
 import datetime
 import time
 import random
+import csv
 
 class MCP3002:
     """
@@ -209,6 +210,20 @@ class Radee(MCP3002):
         print("RUN : print_data")
         print("{time}, {voltage}".format(**self.data))
 
+    def data2csv(self, filename):
+        """
+        現在保持している測定時刻と測定電圧をCSVファイルに書き込む
+
+        Parameters
+        ----------
+        filename : string
+            CSVファイル名
+        """
+        print("RUN : data2csv")
+        with open(filename, 'a') as f:
+            writer = csv.DictWriter(f, ["time", "voltage"])
+            writer.writerow(self.data)
+
     def gpio_cleanup(self):
         """
         GPIOの終了処理を行う
@@ -226,6 +241,7 @@ if __name__ == "__main__":
         while True: # Ctrl + Cで止めるまで無限ループ
             radee.measure()
             radee.print_data()
+            radee.data2csv("sample.csv")
             print("-----------------------")
     except KeyboardInterrupt:
         pass
