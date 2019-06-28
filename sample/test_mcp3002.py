@@ -15,7 +15,7 @@ radee2019/mcp3002.py
     GPIO27 : 出力(hold)     電圧を読み出しの間ホールドする信号を出力する
 """
 
-import RPi.GPIO as GPIO # https://sourceforge.net/p/raspberry-gpio-python/wiki/BasicUsage/
+import RPi.GPIO as GPIO
 import spidev # https://pypi.org/project/spidev/
 import datetime
 import time
