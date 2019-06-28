@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-radee2019/sample/demo_test_mcp3002.py
+radee2019/sample/test_mcp3002.py
 
 @2019, Kazuki IWANAGA
 
@@ -12,15 +12,13 @@ radee2019/sample/demo_test_mcp3002.py
 - 使用するピン(BCM)
     GPIO18 : 入力(receiver) 信号が来たことを知らせる割り込み信号を受信する
     GPIO17 : 出力(resetter) 読み出し終了後にセンサーのリセット信号を出力する
-    GPIO27 : 出力(holder)     電圧を読み出しの間ホールドする信号を出力する
+    GPIO27 : 出力(holder)   電圧を読み出しの間ホールドする信号を出力する
 """
 
-# import RPi.GPIO as GPIO
-# import spidev # https://pypi.org/project/spidev/
+import RPi.GPIO as GPIO
+import spidev # https://pypi.org/project/spidev/
 import datetime
 import time
-import random
-import csv
 
 class MCP3002:
     """
@@ -29,7 +27,7 @@ class MCP3002:
     Attributes
     ----------
     spi_ch : int
-        RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+        MCP3002のチャンネル番号(0か1のどちらか)
     spi : object
         spidevで提供されているオブジェクト
     """
@@ -40,18 +38,17 @@ class MCP3002:
         Parameters
         ----------
         spi_ch : int
-            RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+            MCP3002のチャンネル番号(0か1のどちらか)
         """
         self.spi_ch       = spi_ch
-        # self.spi          = spidev.SpiDev()
+        self.spi          = spidev.SpiDev()
 
     def spi_setup(self):
         """
         SPIの初期化
         """
-        print("RUN : spi_setup")
-        # self.spi.open(0, 0)
-        # self.spi.max_speed_hz = 1000000 # 10 MHz
+        self.spi.open(0, 0)
+        self.spi.max_speed_hz = 1000000 # 10 MHz
 
     def spi_read(self):
         """
@@ -68,35 +65,33 @@ class MCP3002:
         val : int
             ADコンバータの出力値, すなわち測定電圧値[V]
         """
-        print("RUN : spi_read")
-        # tmp = self.spi.xfer2([0x68, 0x00]) # ch0なら0x68, ch1なら0x78
-        # val = ((tmp[0] << 8) + tmp[1]) & 0x3ff
-        return random.randint(1, 1023)
+        tmp = self.spi.xfer2([0x68, 0x00]) # ch0なら0x68, ch1なら0x78
+        val = ((tmp[0] << 8) + tmp[1]) & 0x3ff
+        return val
 
-    # def spi_read_qiita(self):
-    #     """
-    #     SPI読み出しの予備(Qiitaで拾った)
-    #     spi_readが動かない時に切り替える
+    def spi_read_qiita(self):
+        """
+        SPI読み出しの予備(Qiitaで拾った)
+        spi_readが動かない時に切り替える
 
-    #     参考 : https://qiita.com/Zensa55/items/1a2779c24de20ee35af8
+        参考 : https://qiita.com/Zensa55/items/1a2779c24de20ee35af8
 
-    #     Returns
-    #     -------
-    #     adcout : int
-    #         ADコンバータの出力値, すなわち測定電圧値[V]
-    #     """
-    #     command1 = 0xd | (spi_ch<<1)
-    #     command1 <<= 3
-    #     ret = self.spi.xfer2([command1,0,0])
-    #     adcout = (ret[0]&0x3)<<8 | ret[1]
-    #     return adcout
+        Returns
+        -------
+        adcout : int
+            ADコンバータの出力値, すなわち測定電圧値[V]
+        """
+        command1 = 0xd | (spi_ch<<1)
+        command1 <<= 3
+        ret = self.spi.xfer2([command1,0,0])
+        adcout = (ret[0]&0x3)<<8 | ret[1]
+        return adcout
 
     def spi_cleanup(self):
         """
         SPIの終了処理を行う
         """
-        print("RUN : spi_cleanup")
-        # self.spi.close()
+        self.spi.close()
 
 class Radee(MCP3002):
     """
@@ -112,7 +107,7 @@ class Radee(MCP3002):
     holder_bcm : int, default 27
         ホールド信号を出力するGPIOピンのBCM番号
     spi_ch : int
-        RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+        MCP3002のチャンネル番号(0か1のどちらか)
     timing_const : float
         信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
     spi : object
@@ -142,7 +137,7 @@ class Radee(MCP3002):
         holder_bcm : int, default 27
             ホールド信号を出力するGPIOピンのBCM番号
         spi_ch : int
-            RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+            MCP3002のチャンネル番号(0か1のどちらか)
         timing_const : float
             信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
 
@@ -161,16 +156,15 @@ class Radee(MCP3002):
         """
         GPIOを初期化する
         """
-        print("RUN : gpio_setup")
-        # GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM)
 
-        # GPIO.setup(self.receiver_bcm, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.receiver_bcm, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-        # GPIO.setup(self.resetter_bcm, GPIO.OUT)
-        # GPIO.output(self.resetter_bcm, GPIO.LOW)
+        GPIO.setup(self.resetter_bcm, GPIO.OUT)
+        GPIO.output(self.resetter_bcm, GPIO.LOW)
 
-        # GPIO.setup(self.holder_bcm, GPIO.OUT)
-        # GPIO.output(self.holder_bcm, GPIO.LOW)
+        GPIO.setup(self.holder_bcm, GPIO.OUT)
+        GPIO.output(self.holder_bcm, GPIO.LOW)
 
     def measure(self):
         """
@@ -188,48 +182,30 @@ class Radee(MCP3002):
         --------
         MCP3002.spi_read : SPIでADコンバータの出力を取得する
         """
-        time.sleep(1)
-        print("RUN : measure")
-        # GPIO.wait_for_edge(self.receiver_bcm, GPIO.RISING)
-        # time.sleep(self.timing_const)
+        GPIO.wait_for_edge(self.receiver_bcm, GPIO.RISING)
+        time.sleep(self.timing_const)
 
-        # GPIO.output(self.holder_bcm, GPIO.HIGH)
+        GPIO.output(self.holder_bcm, GPIO.HIGH)
         self.data["time"] = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
         self.data["voltage"] = self.spi_read()
-        # GPIO.output(self.holder_bcm, GPIO.LOW)
+        GPIO.output(self.holder_bcm, GPIO.LOW)
 
-        # time.sleep(0.0003) # 本当に必要か分からないので要検証
-        # GPIO.output(self.resetter_bcm, GPIO.HIGH)
-        # time.sleep(0.0005) # リセット信号を認識するのにかかる時間
-        # GPIO.output(self.resetter_bcm, GPIO.LOW)
+        time.sleep(0.0003) # 本当に必要か分からないので要検証
+        GPIO.output(self.resetter_bcm, GPIO.HIGH)
+        time.sleep(0.0005) # リセット信号を認識するのにかかる時間
+        GPIO.output(self.resetter_bcm, GPIO.LOW)
 
     def print_data(self):
         """
         現在保持している測定時刻と測定電圧を表示する
         """
-        print("RUN : print_data")
         print("{time}, {voltage}".format(**self.data))
-
-    def data2csv(self, filename):
-        """
-        現在保持している測定時刻と測定電圧をCSVファイルに書き込む
-
-        Parameters
-        ----------
-        filename : string
-            CSVファイル名
-        """
-        print("RUN : data2csv")
-        with open(filename, 'a') as f:
-            writer = csv.DictWriter(f, ["time", "voltage"])
-            writer.writerow(self.data)
 
     def gpio_cleanup(self):
         """
         GPIOの終了処理を行う
         """
-        print("RUN : gpio_cleanup")
-        # GPIO.cleanup()
+        GPIO.cleanup()
 
 if __name__ == "__main__":
     radee = Radee() # インスタンス作成
@@ -241,8 +217,6 @@ if __name__ == "__main__":
         while True: # Ctrl + Cで止めるまで無限ループ
             radee.measure()
             radee.print_data()
-            radee.data2csv("sample.csv")
-            print("-----------------------")
     except KeyboardInterrupt:
         pass
     finally:
