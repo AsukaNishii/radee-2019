@@ -19,8 +19,8 @@ class Radee:
     """
     Class
 
-    Member Variables
-    ----------------
+    Attributes
+    ----------
     receiver_bcm : int, default 18
         割り込み信号を受信するGPIOピンのBCM番号
     resetter_bcm : int, default 17
