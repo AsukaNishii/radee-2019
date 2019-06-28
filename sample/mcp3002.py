@@ -15,70 +15,28 @@ import spidev # https://pypi.org/project/spidev/
 import datetime
 import time
 
-class Radee:
+class MCP3002:
     """
-    Class
+    MCP3002関連をまとめたクラス
 
     Attributes
     ----------
-    receiver_bcm : int, default 18
-        割り込み信号を受信するGPIOピンのBCM番号
-    resetter_bcm : int, default 17
-        半導体センサーのリセット信号を出力するGPIOピンのBCM番号
-    hold_bcm : int, default 27
-        ホールド信号を出力するGPIOピンのBCM番号
     ch_spi : int
         RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
-    timing_const : float
-        信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
     spi : object
         spidevで提供されているオブジェクト
-    data : dict
-        測定データ  (time, voltage)
-            time : datetime
-                測定時刻(%y-%m-%d %H:%M:%S)
-            voltage : int
-                測定電圧[V]
     """
-    def __init__(self, receiver_bcm=18, resetter_bcm=17, hold_bcm=27, \
-                 ch_spi=0, timing_const=0.00002):
+    def __init__(self, ch_spi):
         """
         Constructor
 
         Parameters
         ----------
-        receiver_bcm : int, default 17
-            割り込み信号を受信するGPIOピンのBCM番号
-        resetter_bcm : int, default 18
-            半導体センサーのリセット信号を出力するGPIOピンのBCM番号
-        hold_bcm : int, default 27
-            ホールド信号を出力するGPIOピンのBCM番号
         ch_spi : int
             RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
-        timing_const : float
-            信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
         """
-        self.receiver_bcm = receiver_bcm
-        self.resetter_bcm = resetter_bcm
-        self.hold_bcm     = hold_bcm
         self.ch_spi       = ch_spi
-        self.timing_const = timing_const
         self.spi          = spidev.SpiDev()
-        self.data         = {"time": time.time(), "voltage": 0}
-
-    def gpio_setup(self):
-        """
-        GPIOを初期化する
-        """
-        GPIO.setmode(GPIO.BCM)
-
-        GPIO.setup(self.receiver_bcm, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-        GPIO.setup(self.resetter_bcm, GPIO.OUT)
-        GPIO.output(self.resetter_bcm, GPIO.LOW)
-
-        GPIO.setup(self.hold_bcm, GPIO.OUT)
-        GPIO.output(self.hold_bcm, GPIO.LOW)
 
     def spi_setup(self):
         """
@@ -124,6 +82,84 @@ class Radee:
         adcout = (ret[0]&0x3)<<8 | ret[1]
         return adcout
 
+    def spi_cleanup(self):
+        """
+        SPIの終了処理を行う
+        """
+        self.spi.close()
+
+class Radee(MCP3002):
+    """
+    Main Class
+
+    Attributes
+    ----------
+    receiver_bcm : int, default 18
+        割り込み信号を受信するGPIOピンのBCM番号
+    resetter_bcm : int, default 17
+        半導体センサーのリセット信号を出力するGPIOピンのBCM番号
+    hold_bcm : int, default 27
+        ホールド信号を出力するGPIOピンのBCM番号
+    ch_spi : int
+        RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+    timing_const : float
+        信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
+    spi : object
+        spidevで提供されているオブジェクト
+    data : dict
+        測定データ  (time, voltage)
+            time : datetime
+                測定時刻(%y-%m-%d %H:%M:%S)
+            voltage : int
+                測定電圧[V]
+
+    See Also
+    --------
+    MCP3002 : MCP3002関連のクラス   
+    """
+    def __init__(self, receiver_bcm=18, resetter_bcm=17, hold_bcm=27, \
+                 timing_const=0.00002, ch_spi=0):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        receiver_bcm : int, default 17
+            割り込み信号を受信するGPIOピンのBCM番号
+        resetter_bcm : int, default 18
+            半導体センサーのリセット信号を出力するGPIOピンのBCM番号
+        hold_bcm : int, default 27
+            ホールド信号を出力するGPIOピンのBCM番号
+        ch_spi : int
+            RaspberryPiのSPIのチャンネル番号(0か1のどちらか)
+        timing_const : float
+            信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
+
+        See Also
+        --------
+        MCP3002.__init__ : super().__init__で呼び出される
+        """
+        super().__init__(ch_spi)
+        self.receiver_bcm = receiver_bcm
+        self.resetter_bcm = resetter_bcm
+        self.hold_bcm     = hold_bcm
+        self.timing_const = timing_const
+        self.data         = {"time": time.time(), "voltage": 0}
+
+    def gpio_setup(self):
+        """
+        GPIOを初期化する
+        """
+        GPIO.setmode(GPIO.BCM)
+
+        GPIO.setup(self.receiver_bcm, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+        GPIO.setup(self.resetter_bcm, GPIO.OUT)
+        GPIO.output(self.resetter_bcm, GPIO.LOW)
+
+        GPIO.setup(self.hold_bcm, GPIO.OUT)
+        GPIO.output(self.hold_bcm, GPIO.LOW)
+
     def measure(self):
         """
         測定を行う
@@ -138,7 +174,7 @@ class Radee:
 
         See Also
         --------
-        spi_read : SPIでADコンバータの出力を取得する
+        MCP3002.spi_read : SPIでADコンバータの出力を取得する
         """
         GPIO.wait_for_edge(self.receiver_bcm, GPIO.RISING)
         time.sleep(self.timing_const)
@@ -159,12 +195,6 @@ class Radee:
         """
         print("{time}, {voltage}".format(**self.data))
 
-    def spi_cleanup(self):
-        """
-        SPIの終了処理を行う
-        """
-        self.spi.close()
-
     def gpio_cleanup(self):
         """
         GPIOの終了処理を行う
@@ -174,7 +204,6 @@ class Radee:
 if __name__ == "__main__":
     radee = Radee() # インスタンス作成
 
-    # 初期化
     radee.gpio_setup()
     radee.spi_setup()
 
