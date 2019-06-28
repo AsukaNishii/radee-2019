@@ -13,6 +13,7 @@
 import RPi.GPIO as GPIO # https://sourceforge.net/p/raspberry-gpio-python/wiki/BasicUsage/
 import spidev # https://pypi.org/project/spidev/
 import datetime
+import time
 
 class Radee:
     """
@@ -32,10 +33,12 @@ class Radee:
         信号を受信してからガウシアンのピークに達するまでにかかる秒数[s]
     spi : object
         spidevで提供されているオブジェクト
-    t : datetime
-        測定時刻(%y-%m-%d %H:%M:%S)
-    voltage : int
-        測定電圧[V]
+    data : dict
+        測定データ  (time, voltage)
+            time : datetime
+                測定時刻(%y-%m-%d %H:%M:%S)
+            voltage : int
+                測定電圧[V]
     """
     def __init__(self, receiver_bcm=18, resetter_bcm=17, hold_bcm=27, \
                  ch_spi=0, timing_const=0.00002):
@@ -61,8 +64,7 @@ class Radee:
         self.ch_spi       = ch_spi
         self.timing_const = timing_const
         self.spi          = spidev.SpiDev()
-        self.t            = time.time()
-        self.voltage      = 0
+        self.data         = {"time": time.time(), "voltage": 0}
 
     def gpio_setup(self):
         """
@@ -140,11 +142,13 @@ class Radee:
         """
         GPIO.wait_for_edge(self.receiver_bcm, GPIO.RISING)
         time.sleep(self.timing_const)
+
         GPIO.output(self.hold_bcm, GPIO.HIGH)
-        self.t = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
-        self.voltage = self.spi_read()
+        self.data["time"] = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
+        self.data["voltage"] = self.spi_read()
         GPIO.output(self.hold_bcm, GPIO.LOW)
-        time.sleep(0.0003) # 必要かは分からないので要検証
+
+        time.sleep(0.0003) # 本当に必要か分からないので要検証
         GPIO.output(self.resetter_bcm, GPIO.HIGH)
         time.sleep(0.0005) # リセット信号を認識するのにかかる時間
         GPIO.output(self.resetter_bcm, GPIO.LOW)
@@ -153,7 +157,7 @@ class Radee:
         """
         現在保持している測定時刻と測定電圧を表示する
         """
-        print(f"time = {t}, voltage = {voltage}")
+        print("{time}, {voltage}".format(**self.data))
 
     def spi_cleanup(self):
         """
@@ -167,7 +171,7 @@ class Radee:
         """
         GPIO.cleanup()
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     radee = Radee() # インスタンス作成
 
     # 初期化
