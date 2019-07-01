@@ -2,17 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-radee2019/sample/demo_test_mcp3002.py
+radee2019/test/demo_test_mcp3002.py
 
 @2019, Kazuki IWANAGA
 
-- wait_for_edge方式でSPI読み出しをするプログラム
-    ADコンバータは`MCP3002`を想定
-    データシート : http://akizukidenshi.com/download/ds/microchip/mcp3002.pdf
-- 使用するピン(BCM)
-    GPIO18 : 入力(receiver) 信号が来たことを知らせる割り込み信号を受信する
-    GPIO17 : 出力(resetter) 読み出し終了後にセンサーのリセット信号を出力する
-    GPIO27 : 出力(holder)     電圧を読み出しの間ホールドする信号を出力する
+- radee2019/test/test_mcp3002.pyのデモンストレーション
+  3系pythonで実行してください
 """
 
 # import RPi.GPIO as GPIO

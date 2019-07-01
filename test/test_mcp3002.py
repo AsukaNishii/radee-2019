@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-radee2019/sample/test_mcp3002.py
+radee2019/test/test_mcp3002.py
 
 @2019, Kazuki IWANAGA
 
+- 3系pythonで実行
 - wait_for_edge方式でSPI読み出しをするプログラム
     ADコンバータは`MCP3002`を想定
     データシート : http://akizukidenshi.com/download/ds/microchip/mcp3002.pdf
